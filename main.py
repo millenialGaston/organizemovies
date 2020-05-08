@@ -2,6 +2,7 @@ import sqlite3
 import os
 import datetime
 import argparse
+import subprocess
 
 video_dir="/home/spirou/Videos"
 
@@ -97,14 +98,40 @@ def scandb():
         print(row)
     c.close()
 
+def show_movies():
+    conn = sqlite3.connect("movie.db")
+    c = conn.cursor()
+    for row in c.execute('SELECT * from movies'):
+      print(f'{row[0]}  ({row[1]})')
+    c.close()
+
+def prompt_user_for_movie():
+    name_of_request = input("what is the name of the movie : ")
+    conn = sqlite3.connect("movie.db")
+    c = conn.cursor()
+    c.execute("SELECT * from movies where name=?", (name_of_request,))
+    data = c.fetchall()[0]
+    filepath = data[2]
+    return filepath
+
+
+
 def main():
+
   parser = argparse.ArgumentParser()
   parser.add_argument('action')
   args = parser.parse_args()
+
   if args.action == "scan" :
     scandb()
+
   if args.action == "search" :
     search_for_movies(video_dir)
+
+  if args.action == "watch":
+    show_movies()
+    filepath = prompt_user_for_movie()
+    subprocess.call(['vlc',filepath])
 
 if __name__ == "__main__":
   main()
